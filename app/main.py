@@ -3,6 +3,9 @@ from fastapi import FastAPI, Response, status, HTTPException
 from fastapi.params import Body
 from pydantic import BaseModel
 from random import randrange
+import psycopg2
+from psycopg2.extras import RealDictCursor
+import time
 
 app = FastAPI()
 
@@ -11,6 +14,16 @@ class Post(BaseModel):
     content: str
     published : bool = True
     rating: Optional[int] = None
+
+while True:
+    try:
+        conn = psycopg2.connect(host='localhost', database='fastapi', user='postgres', password='shreyes', cursor_factory=RealDictCursor)
+        cursor = conn.cursor()
+        print("DB connection success")
+        break
+    except Exception as e:
+        print("DB conn failed", e)
+        time.sleep(2)
 
 my_posts = [ {"title": "title 1", "content": "content of 1", "id" : 1}, {"title": "title 2", "content": "content of 2", "id" : 2}]
 
@@ -23,7 +36,6 @@ def find_index_post(id):
     for i,p in enumerate(my_posts):
         if p['id'] == id:
             return i
-
 
 
 # root path
@@ -85,3 +97,30 @@ def update_post(id: int, post: Post):
     post_dict['id'] = id
     my_posts[index] = post_dict
     return {"data": post_dict}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
