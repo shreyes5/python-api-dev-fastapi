@@ -1,4 +1,3 @@
-from email.mime import text
 from .database import Base
 from sqlalchemy import Column, Integer, String, Boolean
 from sqlalchemy.sql.sqltypes import TIMESTAMP
