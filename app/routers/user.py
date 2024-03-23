@@ -4,7 +4,9 @@ from sqlalchemy.orm import Session
 from ..database import get_db
 
 router = APIRouter(
-    prefix="/users"
+    prefix="/users",
+    tags=["Users"]
+
 )
 
 # User path operations

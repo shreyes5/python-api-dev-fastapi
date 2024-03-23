@@ -10,7 +10,7 @@ from . import models, schemas
 from .database import engine, get_db
 from sqlalchemy.orm import Session
 import app.utils as utils
-from .routers import post,user
+from .routers import post,user, auth
 
 models.Base.metadata.create_all(bind=engine)
 
@@ -45,6 +45,8 @@ def find_index_post(id):
 
 app.include_router(post.router)
 app.include_router(user.router)
+app.include_router(auth.router)
+
 
 
 
