@@ -12,7 +12,7 @@ router = APIRouter(
 )
 
 @router.get("/", response_model=List[schemas.Post])
-def get_posts(db: Session= Depends(get_db), current_user: int = Depends(oauth2.get_current_user)):
+def get_posts(db: Session= Depends(get_db), current_user: int = Depends(oauth2.get_current_user), limit: int = 10, skip: int = 0, search:  Optional [str] = ""):
     # cursor.execute(""" select * from posts """)
     # posts = cursor.fetchall()
 
@@ -20,7 +20,9 @@ def get_posts(db: Session= Depends(get_db), current_user: int = Depends(oauth2.g
     # Get logged in user's posts
     # posts = db.query(models.Post.owner_id).filter(models.Post.id == current_user.id).all()
 
-    posts = db.query(models.Post).all()
+    print(limit)
+
+    posts = db.query(models.Post).filter(models.Post.title.contains(search)).limit(limit).offset(skip).all()
     return posts # the my_posts variable is already serialized here 
 
 
@@ -35,7 +37,6 @@ def create_posts(post: schemas.PostCreate, db:Session = Depends(get_db), current
     # print(**post.model_dump())
     # new_post2 = models.Post(**post.model_dump())
 
-    print(current_user.id, "asdijhasikdhasihdj")
     new_post = models.Post(owner_id = current_user.id, 
         **post.model_dump()
     )
