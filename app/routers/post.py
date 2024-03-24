@@ -12,16 +12,21 @@ router = APIRouter(
 )
 
 @router.get("/", response_model=List[schemas.Post])
-def get_posts(db: Session= Depends(get_db), user_id: int = Depends(oauth2.get_current_user)):
+def get_posts(db: Session= Depends(get_db), current_user: int = Depends(oauth2.get_current_user)):
     # cursor.execute(""" select * from posts """)
     # posts = cursor.fetchall()
+
+
+    # Get logged in user's posts
+    # posts = db.query(models.Post.owner_id).filter(models.Post.id == current_user.id).all()
+
     posts = db.query(models.Post).all()
     return posts # the my_posts variable is already serialized here 
 
 
 
 @router.post("/", status_code=status.HTTP_201_CREATED, response_model=schemas.Post)
-def create_posts(post: schemas.PostCreate, db:Session = Depends(get_db), user_id: int = Depends(oauth2.get_current_user)):
+def create_posts(post: schemas.PostCreate, db:Session = Depends(get_db), current_user: int = Depends(oauth2.get_current_user)):
     # cursor.execute(""" insert into posts (title, content, published) values (%s, %s, %s) returning *  """, (post.title, post.content, post.published))
     # new_post = cursor.fetchone()
     # conn.commit()  #save the data to the database
@@ -30,8 +35,8 @@ def create_posts(post: schemas.PostCreate, db:Session = Depends(get_db), user_id
     # print(**post.model_dump())
     # new_post2 = models.Post(**post.model_dump())
 
-    print(user_id)
-    new_post = models.Post(
+    print(current_user.id, "asdijhasikdhasihdj")
+    new_post = models.Post(owner_id = current_user.id, 
         **post.model_dump()
     )
 
@@ -42,8 +47,8 @@ def create_posts(post: schemas.PostCreate, db:Session = Depends(get_db), user_id
 
 
 
-@router.get("/{id}")
-def get_post(id: int, db:Session = Depends(get_db), user_id: int = Depends(oauth2.get_current_user)):
+@router.get("/{id}", response_model=schemas.Post)
+def get_post(id: int, db:Session = Depends(get_db), current_user: int = Depends(oauth2.get_current_user)):
     # cursor.execute(""" select * from posts where id = %s""", (str(id),))
     # post = cursor.fetchone()
     post = db.query(models.Post).filter(models.Post.id == id).first()
@@ -51,23 +56,29 @@ def get_post(id: int, db:Session = Depends(get_db), user_id: int = Depends(oauth
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Post with the id {id} was not found")
         # response.status_code = status.HTTP_404_NOT_FOUND
         # return {"message" : f"Post with the id {id} was not found"}
-    return {"post_details" : post}
+    return  post
 
 
 
 @router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_post(id :int, db:Session = Depends(get_db), user_id: int = Depends(oauth2.get_current_user)):
+def delete_post(id :int, db:Session = Depends(get_db), current_user: int = Depends(oauth2.get_current_user)):
 
     # cursor.execute(""" delete from posts where id =%s  returning * """, (str(id),))
     # deleted_post = cursor.fetchone()
     # conn.commit()
 
-    post =  db.query(models.Post).filter(models.Post.id == id)
+    post_query =  db.query(models.Post).filter(models.Post.id == id)
 
-    if post.first() == None:
+    post = post_query.first()
+
+    if post == None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Post with the id {id} was not found")
     
-    post.delete(synchronize_session=False)
+    if post.owner_id != current_user.id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=f"Not authorized to perform requested action")
+
+    
+    post_query.delete(synchronize_session=False)
     db.commit()
 
     return Response(status_code=status.HTTP_204_NO_CONTENT)
@@ -75,7 +86,7 @@ def delete_post(id :int, db:Session = Depends(get_db), user_id: int = Depends(oa
 
 
 @router.put("/{id}", response_model=schemas.Post)
-def update_post(id: int, updated_post: schemas.PostCreate, db:Session = Depends(get_db), user_id: int = Depends(oauth2.get_current_user)):
+def update_post(id: int, updated_post: schemas.PostCreate, db:Session = Depends(get_db), current_user: int = Depends(oauth2.get_current_user)):
 
     # cursor.execute(""" update posts set title = %s, content = %s, published = %s where id = %s returning * """ , (post.title, post.content, post.published, str(id)))
 
@@ -84,10 +95,14 @@ def update_post(id: int, updated_post: schemas.PostCreate, db:Session = Depends(
     # conn.commit()
 
     post_query =  db.query(models.Post).filter(models.Post.id == id)
-    post = post_query.first
+    post = post_query.first()
 
     if post == None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Post with the id {id} was not found")
+    
+    if post.owner_id != current_user.id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=f"Not authorized to perform requested action")
+
     
     post_query.update(updated_post.model_dump(), synchronize_session=False)
     db.commit()
