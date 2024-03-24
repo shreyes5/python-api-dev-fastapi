@@ -12,7 +12,7 @@ oauth2_scheme  = OAuth2PasswordBearer(tokenUrl='login')
 
 SECRET_KEY = "987f98asdfas0f8a90ds7gads6a9sfg"
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
+ACCESS_TOKEN_EXPIRE_MINUTES = 60
 
 
 def create_access_token(data: dict):
