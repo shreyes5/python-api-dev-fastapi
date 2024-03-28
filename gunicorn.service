@@ -1,0 +1,14 @@
+[Unit]
+Description=fastapi application
+After=network.target
+
+[Service]
+User=shreyes
+Group=shreyes
+WorkingDirectory=/home/shreyes/app/src/
+Environment="PATH=/home/shreyes/app/venv/bin"
+EnvironmentFile=/home/shreyes/.env
+ExecStart=/home/shreyes/app/venv/bin/gunicorn -w 4 -k uvicorn.workers.UvicornWorker app.main:app --bind 0.0.0.0:8000
+
+[Install]
+WantedBy=multi-user.target
