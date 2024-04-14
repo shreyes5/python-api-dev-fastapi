@@ -31,5 +31,5 @@ app.include_router(vote.router)
 # root path
 @app.get("/")
 def root():
-    return {"message": "Hello World wohooooo"}
+    return {"message": "Hello World bind mount docker fully?"}
 
